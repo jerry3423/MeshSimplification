@@ -1,0 +1,36 @@
+﻿  Mesh.cpp
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(146,44): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(181,21): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(208,25): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(214,24): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(504,36): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\include\glm\detail\type_vec4.inl(585,104): warning C4244: “参数”: 从“U”转换到“T”，可能丢失数据
+          with
+          [
+              U=int
+          ]
+          and
+          [
+              T=float
+          ]
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\include\glm\detail\type_mat4x4.inl(365): message : 查看对正在编译的函数 模板 实例化“glm::vec<4,float,glm::unaligned_simd_highp> &glm::vec<4,float,glm::unaligned_simd_highp>::operator *=<U>(U)”的引用
+          with
+          [
+              U=int
+          ]
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\include\glm\detail\type_mat4x4.inl(365): message : 查看对正在编译的函数 模板 实例化“glm::vec<4,float,glm::unaligned_simd_highp> &glm::vec<4,float,glm::unaligned_simd_highp>::operator *=<U>(U)”的引用
+          with
+          [
+              U=int
+          ]
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(286): message : 查看对正在编译的函数 模板 实例化“glm::mat<4,4,glm::f32,glm::unaligned_simd_highp> &glm::mat<4,4,glm::f32,glm::unaligned_simd_highp>::operator *=<int>(U)”的引用
+          with
+          [
+              U=int
+          ]
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(286): message : 查看对正在编译的函数 模板 实例化“glm::mat<4,4,glm::f32,glm::unaligned_simd_highp> &glm::mat<4,4,glm::f32,glm::unaligned_simd_highp>::operator *=<int>(U)”的引用
+          with
+          [
+              U=int
+          ]
+  Mesh Simplification.vcxproj -> C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\x64\Debug\Mesh Simplification.exe
