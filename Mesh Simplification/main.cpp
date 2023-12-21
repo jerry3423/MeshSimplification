@@ -101,7 +101,6 @@ int main()
     getShader();
 
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
 
     // Set up Viewport
     glViewport(0, 0, WIDTH, HEIGHT);
@@ -422,7 +421,6 @@ void renderImgui(Mesh& mesh)
             mesh.enableTexture = false;
 
             mesh.readFile(mesh.fileName);
-            mesh.preProcessData();
             renderMesh(mesh);
         }
         ImGui::SameLine();
@@ -477,6 +475,15 @@ void renderImgui(Mesh& mesh)
         // Control simplify ratio
         ImGui::SliderFloat("Simplify Ratio", &mesh.simplifyRatio, 0.0f, 1.0f, "%.2f");
 
+        // Aggregation control
+        ImGui::Checkbox("Aggregation", &mesh.enableAggregation);
+
+        if (mesh.enableAggregation)
+        {
+            // Threshold for aggregation
+            ImGui::InputFloat("Distance Threshold", &mesh.t);
+        }
+
         // Boundary preservation
         ImGui::Checkbox("Preserve Boundary", &mesh.preserveBoundary);
 
@@ -488,12 +495,24 @@ void renderImgui(Mesh& mesh)
 
         // Start simplify
         if (ImGui::Button("Apply and Simplify")) {
+            mesh.preProcessData();
+            mesh.v_orig = mesh.vertices.size();
+            mesh.d_orig = mesh.d_squared;
+
             std::clock_t start = std::clock();
             // Do mesh simplification
             mesh.simplify();
             std::clock_t end = std::clock();
             simplifyTime = double(end - start) / CLOCKS_PER_SEC;
             renderMesh(mesh);
+
+            /*mesh.d_squared = 0;
+            mesh.preProcessData();
+            mesh.v_new = mesh.vertices.size();
+            mesh.d_new = mesh.d_squared;
+
+            mesh.geo_error = (mesh.d_orig + mesh.d_new) / (mesh.v_orig + mesh.v_new);*/
+
         }
 
         // Show simplify time
@@ -502,6 +521,8 @@ void renderImgui(Mesh& mesh)
         ImGui::Text("Vertex number: %d ", mesh.vertices.size());
         // Show face number
         ImGui::Text("Face number: %d ", mesh.faceVertices.size());
+        // Show face number
+        ImGui::Text("Error: %d ", mesh.geo_error);
     }
     ImGui::End();
 

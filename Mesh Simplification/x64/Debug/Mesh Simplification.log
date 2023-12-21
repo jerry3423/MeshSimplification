@@ -1,9 +1,23 @@
 ﻿  Mesh.cpp
-C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(146,44): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
-C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(181,21): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
-C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(208,25): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(214,24): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(504,36): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\include\Eigen\src\Core\arch\Default\Half.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\include\Eigen\src\Core\arch\Default\BFloat16.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\include\Eigen\src\Core\arch\Default\GenericPacketMathFunctions.h(676,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(148,44): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(187,21): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(214,25): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(220,24): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(258,34): warning C4267: “参数”: 从“size_t”转换到“_Ty”，可能丢失数据
+          with
+          [
+              _Ty=int
+          ]
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(259,34): warning C4267: “参数”: 从“size_t”转换到“_Ty”，可能丢失数据
+          with
+          [
+              _Ty=int
+          ]
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(269,15): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(557,36): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
 C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\include\glm\detail\type_vec4.inl(585,104): warning C4244: “参数”: 从“U”转换到“T”，可能丢失数据
           with
           [
@@ -23,12 +37,12 @@ C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\include\glm\d
           [
               U=int
           ]
-C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(286): message : 查看对正在编译的函数 模板 实例化“glm::mat<4,4,glm::f32,glm::unaligned_simd_highp> &glm::mat<4,4,glm::f32,glm::unaligned_simd_highp>::operator *=<int>(U)”的引用
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(333): message : 查看对正在编译的函数 模板 实例化“glm::mat<4,4,glm::f32,glm::unaligned_simd_highp> &glm::mat<4,4,glm::f32,glm::unaligned_simd_highp>::operator *=<int>(U)”的引用
           with
           [
               U=int
           ]
-C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(286): message : 查看对正在编译的函数 模板 实例化“glm::mat<4,4,glm::f32,glm::unaligned_simd_highp> &glm::mat<4,4,glm::f32,glm::unaligned_simd_highp>::operator *=<int>(U)”的引用
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(333): message : 查看对正在编译的函数 模板 实例化“glm::mat<4,4,glm::f32,glm::unaligned_simd_highp> &glm::mat<4,4,glm::f32,glm::unaligned_simd_highp>::operator *=<int>(U)”的引用
           with
           [
               U=int

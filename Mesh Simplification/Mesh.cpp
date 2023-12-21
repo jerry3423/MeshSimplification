@@ -127,6 +127,8 @@ void Mesh::clear()
 
 void Mesh::buildDirectedEdgeStructure()
 {
+	directedEdge.clear();
+	oppositeHalf.clear();
 	std::map<std::pair<int, int>, int> halfEdgeMap;
 
 	// Iterate over all the triangles
@@ -170,6 +172,10 @@ void Mesh::preProcessData()
 {
 	buildDirectedEdgeStructure();
 
+	for (int i = 0; i < vertices.size(); i++)
+	{
+		vertices[i].adjacentFaces.clear();
+	}
 	std::vector<bool> visitedHalfEdges(directedEdge.size(), false);
 
 	// Get vertex's adjacent faces
@@ -213,9 +219,8 @@ void Mesh::preProcessData()
 	{
 		computeErrorMetrics(i);
 	}
-
-	// Build edge heap
-	// Clear heap first
+	// Build edge queue
+	// Clear queue first
 	while (!edgeHeap.empty())
 	{
 		edgeHeap.pop();
@@ -242,11 +247,50 @@ void Mesh::preProcessData()
 		edgeHeap.push(edge);
 		versionControl[edgePair] = 0;
 	}
+
+	if (enableAggregation)
+	{
+		// Find all vertices whose distance from the current vertex is less than t
+		std::vector<std::vector<int>> closeVertices(vertices.size());
+		for (size_t i = 0; i < vertices.size(); i++) {
+			for (size_t j = i + 1; j < vertices.size(); j++) {
+				if (glm::distance(vertices[i].position, vertices[j].position) < t) {
+					closeVertices[i].push_back(j);
+					closeVertices[j].push_back(i);
+				}
+			}
+		}
+
+		// Build these vertex pair and push to edge queue
+		for (size_t i = 0; i < closeVertices.size(); i++)
+		{
+			for (int j : closeVertices[i])
+			{
+				int v1 = i;
+				int v2 = j;
+
+				if (v1 > v2) std::swap(v1, v2);
+				// Continue if this edge has been added
+				auto edgePair = std::make_pair(v1, v2);
+				if (processedEdges.find(edgePair) != processedEdges.end()) continue;
+				processedEdges[edgePair] = true;
+
+				Edge edge;
+				edge.v1 = v1;
+				edge.v2 = v2;
+				edge.version = 0;
+				computeEdgeCost(edge);
+				edgeHeap.push(edge);
+				versionControl[edgePair] = 0;
+			}
+		}
+	}
+
 }
 
 void Mesh::computeFaceParameter(int faceIndex)
 {
-	// Get three vertices
+	//Get three vertices
 	glm::vec3 v1 = vertices[faceVertices[faceIndex].v[0]].position;
 	glm::vec3 v2 = vertices[faceVertices[faceIndex].v[1]].position;
 	glm::vec3 v3 = vertices[faceVertices[faceIndex].v[2]].position;
@@ -277,6 +321,9 @@ void Mesh::computeErrorMetrics(int vertexIndex)
 
 		vertices[vertexIndex].Q += Kp;
 	}
+	// Evaluate geometry error
+	glm::vec4 v(vertices[vertexIndex].position, 1.0f);
+	d_squared += glm::dot(v, vertices[vertexIndex].Q * v);
 
 	// If boundary preservation
 	if (preserveBoundary)
@@ -300,7 +347,8 @@ void Mesh::computeEdgeCost(Edge& edge)
 	glm::vec4 p;
 	if (std::abs(glm::determinant(Q)) > 1e-6)
 	{
-		p = glm::inverse(Q) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		glm::mat4 b = glm::inverse(Q);
+		p = b * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	}
 	else {
 		p = glm::vec4((vertices[edge.v1].position + vertices[edge.v2].position) * 0.5f, 1.0f);
@@ -386,7 +434,12 @@ bool Mesh::validEdge(const Edge& edge)
 		return false;
 	}
 
-	return commonVerticesNum(edge);
+	if (edge.cost > 1e4)
+	{
+		return false;
+	}
+
+	return true;
 }
 
 bool Mesh::isFlipped(const Edge& edge, const std::set<int>& commonFaces)
@@ -437,7 +490,7 @@ bool Mesh::isFlipped(const Edge& edge, const std::set<int>& commonFaces)
 
 }
 
-bool Mesh::commonVerticesNum(const Edge& edge)
+bool Mesh::commonVerticesNum(const Edge& edge, int commonFacesSize)
 {
 	// Get v1's adjacent vertices
 	std::set<int> v1adjacentVertices;
@@ -476,7 +529,7 @@ bool Mesh::commonVerticesNum(const Edge& edge)
 		}
 	}
 
-	if (count != 2)
+	if (count != commonFacesSize)
 	{
 		return false;
 	}
@@ -502,9 +555,10 @@ void Mesh::simplify()
 	//-----------------------------------------------------------------------------------
 
 	int face_num = faceVertices.size();
+	size_t count = 0;
 	// Select and collapse edge, v1 - v2. 
 	// Move v1 and v2 to optimal position, replace v2 to v1, delete v2
-	for (size_t count = 0; count < (1 - simplifyRatio) * face_num;)
+	while (count < (1 - simplifyRatio) * face_num)
 	{
 		// Get a vaild edge with minumum cost
 		while (!edgeHeap.empty() && !validEdge(edgeHeap.top()))
@@ -539,6 +593,10 @@ void Mesh::simplify()
 			}
 		}
 
+		/*if (!commonVerticesNum(edge, commonAdjacentFaces.size()))
+		{
+			continue;
+		}*/
 		// Update v1 position to optimal opsition
 		vertices[v1].position = edge.optimalPos;
 		vertices[v1].Q = vertices[v1].Q + vertices[v2].Q;
@@ -593,7 +651,14 @@ void Mesh::simplify()
 			computeEdgeCost(newedge);
 			edgeHeap.push(newedge);
 		}
-		count += 2;
+		if (commonAdjacentFaces.size() == 1)
+		{
+			count++;
+		}
+		else if (commonAdjacentFaces.size() == 2)
+		{
+			count += 2;
+		}
 	}
 
 	updateArrays();

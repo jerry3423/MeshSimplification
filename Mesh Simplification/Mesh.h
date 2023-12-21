@@ -10,6 +10,9 @@
 #include<unordered_map>
 
 #include<glm/glm.hpp>
+#include<Eigen/Core>
+
+using namespace Eigen;
 
 class Vertex 
 {
@@ -45,6 +48,7 @@ public:
 
 
 class Mesh {
+
 public:
 	Mesh();
 	void readFile(const char* filename);
@@ -58,7 +62,7 @@ public:
 	void updateArrays();
 	bool validEdge(const Edge& edge);
 	bool isFlipped(const Edge& edge, const std::set<int>& commonFaces);
-	bool commonVerticesNum(const Edge& edge);
+	bool commonVerticesNum(const Edge& edge, int commonFacesSize);
 	void simplify();
 
 public:
@@ -82,11 +86,21 @@ public:
 	char fileName[64] = "";
 
 	float simplifyRatio = 0.01f;
+	float t = 0.2f;
 
 	bool preserveTexture = false;
-	bool preserveBoundary = true;
-	bool preventInversion = true;
+	bool preserveBoundary = false;
+	bool preventInversion = false;
+	bool enableAggregation = false;
 	bool enableTexture = false;
 	bool hasNormal = false;
 	bool hasTexture = false;
+
+	double d_squared = 0;
+	double d_orig = 0;
+	double d_new = 0;
+	int v_orig = 0;
+	int v_new = 0;
+
+	double geo_error = 0;
 };
