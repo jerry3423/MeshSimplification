@@ -204,7 +204,7 @@ void Mesh::preProcessData()
 	{
 		if (oppositeHalf[i] == -1)
 		{
-			vertices[directedEdge[i]].isBoundary = true;
+			faceVertices[i / 3].isBoundary = true;
 		}
 	}
 
@@ -295,11 +295,9 @@ void Mesh::computeFaceParameter(int faceIndex)
 	glm::vec3 v2 = vertices[faceVertices[faceIndex].v[1]].position;
 	glm::vec3 v3 = vertices[faceVertices[faceIndex].v[2]].position;
 
-	glm::vec3 faceNormal = glm::cross(v2 - v1, v3 - v1);
+	glm::vec3 faceNormal = glm::normalize(glm::cross(v2 - v1, v3 - v1));
 
-	faceVertices[faceIndex].a = faceNormal.x;
-	faceVertices[faceIndex].b = faceNormal.y;
-	faceVertices[faceIndex].c = faceNormal.z;
+	faceVertices[faceIndex].n = faceNormal;
 	faceVertices[faceIndex].d = -glm::dot(faceNormal, v1);
 }
 
@@ -308,54 +306,66 @@ void Mesh::computeErrorMetrics(int vertexIndex)
 	// Initial matrix Q
 	vertices[vertexIndex].Q = glm::mat4(0.0f);
 
-	// Iterate certex's adjacent faces and compute Q
 	for (auto it = vertices[vertexIndex].adjacentFaces.begin(); it != vertices[vertexIndex].adjacentFaces.end(); it++)
 	{
-		Face face = faceVertices[*it];
-		glm::mat4 Kp(
-			face.a * face.a, face.a * face.b, face.a * face.c, face.a * face.d,
-			face.a * face.b, face.b * face.b, face.b * face.c, face.b * face.d,
-			face.a * face.c, face.c * face.b, face.c * face.c, face.c * face.d,
-			face.d * face.a, face.d * face.b, face.d * face.c, face.d * face.d
+		Face& face = faceVertices[*it];
+
+		glm::mat3 A = glm::outerProduct(face.n, face.n);
+		glm::vec3 b = face.d * face.n;
+		float c = face.d * face.d;
+
+		glm::mat4 Kp = glm::mat4(
+			A[0][0], A[0][1], A[0][2], b[0],
+			A[1][0], A[1][1], A[1][2], b[1],
+			A[2][0], A[2][1], A[2][2], b[2],
+			b[0],    b[1],    b[2],    c
 		);
 
-		vertices[vertexIndex].Q += Kp;
-	}
-	// Evaluate geometry error
-	glm::vec4 v(vertices[vertexIndex].position, 1.0f);
-	d_squared += glm::dot(v, vertices[vertexIndex].Q * v);
-
-	// If boundary preservation
-	if (preserveBoundary)
-	{
-		if (vertices[vertexIndex].isBoundary)
+		// Boundary preservation
+		if (preserveBoundary)
 		{
-			vertices[vertexIndex].Q *= 1000;
+			if (face.isBoundary)
+			{
+				Kp *= 500;
+			}
 		}
+		vertices[vertexIndex].Q += Kp;
 	}
 }
 
 void Mesh::computeEdgeCost(Edge& edge)
 {
-	glm::mat4 QP = vertices[edge.v1].Q + vertices[edge.v2].Q;
 	glm::mat4 Q = vertices[edge.v1].Q + vertices[edge.v2].Q;
-	Q[3][0] = 0.0f;
-	Q[3][1] = 0.0f;
-	Q[3][2] = 0.0f;
-	Q[3][3] = 1.0f;
 
-	glm::vec4 p;
-	if (std::abs(glm::determinant(Q)) > 1e-6)
+	// Get A, b, c from matrix Q
+	glm::mat3 A = glm::mat3(Q);
+	glm::vec3 b = glm::vec3(Q[0][3], Q[1][3], Q[2][3]);
+	float c = Q[3][3];
+
+	// Place new vertex to optimal position
+	if (currentMode == 0)
 	{
-		glm::mat4 b = glm::inverse(Q);
-		p = b * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		// Check matrix A can inverse
+		if (glm::determinant(A) != 0.0f)
+		{
+			edge.optimalPos = -glm::inverse(A) * b;
+			edge.cost = glm::dot(b, edge.optimalPos) + c;
+		}
+		else
+		{
+			// If matrix A cannot inverse, place new vertex to middle position
+			edge.optimalPos = (vertices[edge.v1].position + vertices[edge.v2].position) * 0.5f;
+			glm::vec4 v(edge.optimalPos, 1.0f);
+			edge.cost = glm::dot(v, Q * v);
+		}
 	}
-	else {
-		p = glm::vec4((vertices[edge.v1].position + vertices[edge.v2].position) * 0.5f, 1.0f);
+	// Place new vertex to middle position
+	else if (currentMode == 1)
+	{
+		edge.optimalPos = (vertices[edge.v1].position + vertices[edge.v2].position) * 0.5f;
+		glm::vec4 v(edge.optimalPos, 1.0f);
+		edge.cost = glm::dot(v, Q * v);
 	}
-
-	edge.optimalPos = glm::vec3(p.x, p.y, p.z);
-	edge.cost = glm::dot(p, QP * p);
 }
 
 void Mesh::updateArrays()
@@ -410,6 +420,28 @@ void Mesh::updateArrays()
 		}
 	}
 
+	//std::vector<float> nearestDistance;
+	//nearestDistance.reserve(vertices.size());
+
+	//for (const auto& vertex : vertices) {
+	//	float minDistance = std::numeric_limits<float>::max();
+
+	//	for (const auto& newVertex : newV) {
+	//		float distSq = glm::distance(vertex.position, newVertex.position);
+	//		if (distSq < minDistance) {
+	//			minDistance = distSq;
+	//		}
+	//	}
+
+	//	nearestDistance.push_back(minDistance * minDistance);
+	//}
+	//float sum = 0.0f;
+	//for (auto d : nearestDistance)
+	//{
+	//	sum += d;
+	//}
+	//error = sqrt(sum / vertices.size());
+
 	vertices = std::move(newV);
 	faceVertices = std::move(newF);
 	texCoords = std::move(newTex);
@@ -433,12 +465,6 @@ bool Mesh::validEdge(const Edge& edge)
 	{
 		return false;
 	}
-
-	if (edge.cost > 1e4)
-	{
-		return false;
-	}
-
 	return true;
 }
 
@@ -490,53 +516,6 @@ bool Mesh::isFlipped(const Edge& edge, const std::set<int>& commonFaces)
 
 }
 
-bool Mesh::commonVerticesNum(const Edge& edge, int commonFacesSize)
-{
-	// Get v1's adjacent vertices
-	std::set<int> v1adjacentVertices;
-	for (int faceIndex : vertices[edge.v1].adjacentFaces)
-	{
-		for (int i = 0; i < 3; i++)
-		{
-			if (faceVertices[faceIndex].v[i] == edge.v1)
-			{
-				continue;
-			}
-			v1adjacentVertices.insert(faceVertices[faceIndex].v[i]);
-		}
-	}
-
-	// Get v2's adjacent vertices
-	std::set<int> v2adjacentVertices;
-	for (int faceIndex : vertices[edge.v2].adjacentFaces)
-	{
-		for (int i = 0; i < 3; i++)
-		{
-			if (faceVertices[faceIndex].v[i] == edge.v2)
-			{
-				continue;
-			}
-			v2adjacentVertices.insert(faceVertices[faceIndex].v[i]);
-		}
-	}
-
-	int count = 0;
-	for (auto v1index : v1adjacentVertices)
-	{
-		if (v2adjacentVertices.find(v1index) != v2adjacentVertices.end())
-		{
-			count++;
-		}
-	}
-
-	if (count != commonFacesSize)
-	{
-		return false;
-	}
-
-	return true;
-}
-
 void Mesh::simplify()
 {
 	// Compute Q for all initial vertices
@@ -585,6 +564,12 @@ void Mesh::simplify()
 			}
 		}
 
+		if (commonAdjacentFaces.size() > 2)
+		{
+			continue;
+		}
+
+		// Prevent face inversion
 		if (preventInversion)
 		{
 			if (isFlipped(edge, commonAdjacentFaces))
@@ -593,10 +578,6 @@ void Mesh::simplify()
 			}
 		}
 
-		/*if (!commonVerticesNum(edge, commonAdjacentFaces.size()))
-		{
-			continue;
-		}*/
 		// Update v1 position to optimal opsition
 		vertices[v1].position = edge.optimalPos;
 		vertices[v1].Q = vertices[v1].Q + vertices[v2].Q;

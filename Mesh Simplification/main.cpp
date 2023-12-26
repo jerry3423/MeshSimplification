@@ -472,6 +472,8 @@ void renderImgui(Mesh& mesh)
     // Mesh simplification parameter adjustment
     if (ImGui::CollapsingHeader("Simplify Parameter"))
     {
+        ImGui::Combo("Vertex Placement", &mesh.currentMode, mesh.SimplifyMode, IM_ARRAYSIZE(mesh.SimplifyMode));
+
         // Control simplify ratio
         ImGui::SliderFloat("Simplify Ratio", &mesh.simplifyRatio, 0.0f, 1.0f, "%.2f");
 
@@ -490,14 +492,9 @@ void renderImgui(Mesh& mesh)
         // Prevent mesh inversion
         ImGui::Checkbox("Prevent Inversion", &mesh.preventInversion);
 
-        // Texture preservation
-        ImGui::Checkbox("Preserve Texture", &mesh.preserveTexture);
-
         // Start simplify
         if (ImGui::Button("Apply and Simplify")) {
             mesh.preProcessData();
-            mesh.v_orig = mesh.vertices.size();
-            mesh.d_orig = mesh.d_squared;
 
             std::clock_t start = std::clock();
             // Do mesh simplification
@@ -505,14 +502,6 @@ void renderImgui(Mesh& mesh)
             std::clock_t end = std::clock();
             simplifyTime = double(end - start) / CLOCKS_PER_SEC;
             renderMesh(mesh);
-
-            /*mesh.d_squared = 0;
-            mesh.preProcessData();
-            mesh.v_new = mesh.vertices.size();
-            mesh.d_new = mesh.d_squared;
-
-            mesh.geo_error = (mesh.d_orig + mesh.d_new) / (mesh.v_orig + mesh.v_new);*/
-
         }
 
         // Show simplify time
@@ -521,8 +510,9 @@ void renderImgui(Mesh& mesh)
         ImGui::Text("Vertex number: %d ", mesh.vertices.size());
         // Show face number
         ImGui::Text("Face number: %d ", mesh.faceVertices.size());
-        // Show face number
-        ImGui::Text("Error: %d ", mesh.geo_error);
+
+        // Show RMS error
+        //ImGui::Text("RMS error: %.6f ", mesh.error);
     }
     ImGui::End();
 

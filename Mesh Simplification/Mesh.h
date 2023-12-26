@@ -10,9 +10,6 @@
 #include<unordered_map>
 
 #include<glm/glm.hpp>
-#include<Eigen/Core>
-
-using namespace Eigen;
 
 class Vertex 
 {
@@ -21,16 +18,15 @@ public:
 	glm::mat4 Q; // QEM at each vertex
 	std::set<int> adjacentFaces; // Index of adjacent face
 	bool deleteFlag = false;
-	bool isBoundary = false;
-
-	Vertex() : Q(glm::mat4(0.0f)) {}
 };
 
 class Face
 {
 public:
 	std::vector<int> v;
-	double a, b, c, d;
+	glm::vec3 n;
+	float d;
+	bool isBoundary = false;
 };
 
 class Edge
@@ -62,7 +58,6 @@ public:
 	void updateArrays();
 	bool validEdge(const Edge& edge);
 	bool isFlipped(const Edge& edge, const std::set<int>& commonFaces);
-	bool commonVerticesNum(const Edge& edge, int commonFacesSize);
 	void simplify();
 
 public:
@@ -85,6 +80,8 @@ public:
 
 	char fileName[64] = "";
 
+	const char* SimplifyMode[2] = { "Optimal Position", "Middle Position"};
+	int currentMode = 0;
 	float simplifyRatio = 0.01f;
 	float t = 0.2f;
 
@@ -96,11 +93,5 @@ public:
 	bool hasNormal = false;
 	bool hasTexture = false;
 
-	double d_squared = 0;
-	double d_orig = 0;
-	double d_new = 0;
-	int v_orig = 0;
-	int v_new = 0;
-
-	double geo_error = 0;
+	//float error = 0.0f;
 };
