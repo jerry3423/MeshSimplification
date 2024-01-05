@@ -10,31 +10,33 @@
 #include<unordered_map>
 
 #include<glm/glm.hpp>
+#include<Eigen/Dense>
+#include<Eigen/LU>
 
 class Vertex 
 {
 public:
-	glm::vec3 position;
-	glm::mat4 Q; // QEM at each vertex
+	Eigen::Vector3f position;
+	Eigen::Matrix4f Q; // QEM at each vertex
 	std::set<int> adjacentFaces; // Index of adjacent face
 	bool deleteFlag = false;
+	bool isBoundary = false;
 };
 
 class Face
 {
 public:
-	std::vector<int> v;
-	glm::vec3 n;
+	std::vector<int> v; // Three vertex index on a face
+	Eigen::Vector3f n; // Face normal
 	float d;
-	bool isBoundary = false;
 };
 
 class Edge
 {
 public:
-	int v1, v2;
-	double cost;
-	glm::vec3 optimalPos; // Optimal vertex position with minimum cost
+	int v1, v2; // Two vertex index on an edge
+	double cost; // Cost of doing edge collapse operation
+	Eigen::Vector3f optimalPos; // Optimal vertex position with minimum cost
 	int version = 0;
 
 	bool operator<(const Edge& other) const {

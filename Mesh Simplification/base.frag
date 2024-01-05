@@ -15,8 +15,7 @@ void main()
     vec3 lightDir = vec3(0, 0, 1);
 
     // Calculate diffuse color
-    float diff = max(dot(Normal, lightDir), 0.0);
-    vec3 diffuse = diff * lightColor;
+    vec3 diffuse = max(dot(Normal, lightDir), 0.0) * lightColor;
 
     vec3 result = diffuse;
     // If use texture

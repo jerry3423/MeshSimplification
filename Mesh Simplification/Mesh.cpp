@@ -204,7 +204,7 @@ void Mesh::preProcessData()
 	{
 		if (oppositeHalf[i] == -1)
 		{
-			faceVertices[i / 3].isBoundary = true;
+			vertices[directedEdge[i]].isBoundary = true;
 		}
 	}
 
@@ -254,7 +254,7 @@ void Mesh::preProcessData()
 		std::vector<std::vector<int>> closeVertices(vertices.size());
 		for (size_t i = 0; i < vertices.size(); i++) {
 			for (size_t j = i + 1; j < vertices.size(); j++) {
-				if (glm::distance(vertices[i].position, vertices[j].position) < t) {
+				if ((vertices[i].position - vertices[j].position).norm() < t) {
 					closeVertices[i].push_back(j);
 					closeVertices[j].push_back(i);
 				}
@@ -290,81 +290,73 @@ void Mesh::preProcessData()
 
 void Mesh::computeFaceParameter(int faceIndex)
 {
-	//Get three vertices
-	glm::vec3 v1 = vertices[faceVertices[faceIndex].v[0]].position;
-	glm::vec3 v2 = vertices[faceVertices[faceIndex].v[1]].position;
-	glm::vec3 v3 = vertices[faceVertices[faceIndex].v[2]].position;
+	// Get three vertices
+	Eigen::Vector3f v1 = vertices[faceVertices[faceIndex].v[0]].position;
+	Eigen::Vector3f v2 = vertices[faceVertices[faceIndex].v[1]].position;
+	Eigen::Vector3f v3 = vertices[faceVertices[faceIndex].v[2]].position;
 
-	glm::vec3 faceNormal = glm::normalize(glm::cross(v2 - v1, v3 - v1));
+	// Calculate the face normal
+	Eigen::Vector3f faceNormal = (v2 - v1).cross(v3 - v1).normalized();
 
+	// Update the face normal and distance d in the face structure
 	faceVertices[faceIndex].n = faceNormal;
-	faceVertices[faceIndex].d = -glm::dot(faceNormal, v1);
+	faceVertices[faceIndex].d = -faceNormal.dot(v1);
 }
 
 void Mesh::computeErrorMetrics(int vertexIndex)
 {
-	// Initial matrix Q
-	vertices[vertexIndex].Q = glm::mat4(0.0f);
+	// Initialize matrix Q
+	vertices[vertexIndex].Q.setZero();
 
 	for (auto it = vertices[vertexIndex].adjacentFaces.begin(); it != vertices[vertexIndex].adjacentFaces.end(); it++)
 	{
 		Face& face = faceVertices[*it];
 
-		glm::mat3 A = glm::outerProduct(face.n, face.n);
-		glm::vec3 b = face.d * face.n;
+		Eigen::Matrix3f A = face.n * face.n.transpose();
+		Eigen::Vector3f b = face.d * face.n;
 		float c = face.d * face.d;
 
-		glm::mat4 Kp = glm::mat4(
-			A[0][0], A[0][1], A[0][2], b[0],
-			A[1][0], A[1][1], A[1][2], b[1],
-			A[2][0], A[2][1], A[2][2], b[2],
-			b[0],    b[1],    b[2],    c
-		);
+		Eigen::Matrix4f Kp;
+		Kp << A, b,
+			b.transpose(), c;
 
-		// Boundary preservation
-		if (preserveBoundary)
-		{
-			if (face.isBoundary)
-			{
-				Kp *= 500;
-			}
-		}
 		vertices[vertexIndex].Q += Kp;
 	}
 }
 
 void Mesh::computeEdgeCost(Edge& edge)
 {
-	glm::mat4 Q = vertices[edge.v1].Q + vertices[edge.v2].Q;
+	Eigen::Matrix4f Q = vertices[edge.v1].Q + vertices[edge.v2].Q;
 
-	// Get A, b, c from matrix Q
-	glm::mat3 A = glm::mat3(Q);
-	glm::vec3 b = glm::vec3(Q[0][3], Q[1][3], Q[2][3]);
-	float c = Q[3][3];
+	// Extract A, b, and c from matrix Q
+	Eigen::Matrix3f A = Q.topLeftCorner<3, 3>();
+	Eigen::Vector3f b = Q.topRightCorner<3, 1>();
+	float c = Q(3, 3);
 
+	Eigen::Matrix3f Ainv;
+	bool isAInvertible;
+	A.computeInverseWithCheck(Ainv, isAInvertible, 1e-4);
 	// Place new vertex to optimal position
 	if (currentMode == 0)
 	{
-		// Check matrix A can inverse
-		if (glm::determinant(A) != 0.0f)
+		if (isAInvertible)
 		{
-			edge.optimalPos = -glm::inverse(A) * b;
-			edge.cost = glm::dot(b, edge.optimalPos) + c;
+			edge.optimalPos = -Ainv * b;
+			edge.cost = b.dot(edge.optimalPos) + c;
 		}
 		else
 		{
 			// If matrix A cannot inverse, place new vertex to middle position
 			edge.optimalPos = (vertices[edge.v1].position + vertices[edge.v2].position) * 0.5f;
-			glm::vec4 v(edge.optimalPos, 1.0f);
-			edge.cost = glm::dot(v, Q * v);
+			Eigen::Vector4f v(edge.optimalPos(0), edge.optimalPos(1), edge.optimalPos(2), 1.0f);
+			edge.cost = v.transpose() * Q * v;
 		}
 	}
-	// Place new vertex to middle position
 	else if (currentMode == 1)
 	{
 		edge.optimalPos = (vertices[edge.v1].position + vertices[edge.v2].position) * 0.5f;
-		glm::vec4 v(edge.optimalPos, 1.0f);
-		edge.cost = glm::dot(v, Q * v);
+		Eigen::Vector4f v(edge.optimalPos(0), edge.optimalPos(1), edge.optimalPos(2), 1.0f);
+		edge.cost = v.transpose() * Q * v;
 	}
 }
 
@@ -465,6 +457,10 @@ bool Mesh::validEdge(const Edge& edge)
 	{
 		return false;
 	}
+	if ((vertices[v1].isBoundary || vertices[v2].isBoundary) && preserveBoundary)
+	{
+		return false;
+	}
 	return true;
 }
 
@@ -486,11 +482,10 @@ bool Mesh::isFlipped(const Edge& edge, const std::set<int>& commonFaces)
 	{
 		// Calculate old normal
 		Face face = faceVertices[faceIndex];
-		glm::vec3 oldNormal = glm::normalize(glm::cross(vertices[face.v[1]].position - vertices[face.v[0]].position, 
-			vertices[face.v[2]].position - vertices[face.v[0]].position));
+		Eigen::Vector3f oldNormal = (vertices[face.v[1]].position - vertices[face.v[0]].position).cross(vertices[face.v[2]].position - vertices[face.v[0]].position).normalized();
 
-		// Get three vertex postion if edge collapse happen
-		glm::vec3 newPositions[3];
+		// Get three vertex positions if edge collapse happen
+		Eigen::Vector3f newPositions[3];
 		for (int i = 0; i < 3; i++)
 		{
 			if (face.v[i] == v1 || face.v[i] == v2)
@@ -504,9 +499,11 @@ bool Mesh::isFlipped(const Edge& edge, const std::set<int>& commonFaces)
 		}
 
 		// Calculate new normal
-		glm::vec3 newNormal = glm::normalize(glm::cross(newPositions[1] - newPositions[0], newPositions[2] - newPositions[0]));
+		Eigen::Vector3f newNormal = (newPositions[1] - newPositions[0]).cross(newPositions[2] - newPositions[0]).normalized();
 
-		if (glm::dot(oldNormal, newNormal) < 0.0f)
+		float COS_THRESHOLD = std::cos(40 * 3.1415926 / 180.0);
+		// Check if the direction of the normal has changed significantly
+		if (oldNormal.dot(newNormal) < COS_THRESHOLD)
 		{
 			return true;
 		}

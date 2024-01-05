@@ -76,7 +76,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create a window
-    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Mesh SImplification", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Mesh Simplification", NULL, NULL);
     if (!window)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -101,6 +101,7 @@ int main()
     getShader();
 
     glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_CULL_FACE);
 
     // Set up Viewport
     glViewport(0, 0, WIDTH, HEIGHT);
@@ -171,21 +172,21 @@ void renderMesh(Mesh& mesh) {
     int currentIndex = 0;
     for (const auto& face : mesh.faceVertices) {
         // Get three vertex in each face
-        glm::vec3 v0 = mesh.vertices[face.v[0]].position;
-        glm::vec3 v1 = mesh.vertices[face.v[1]].position;
-        glm::vec3 v2 = mesh.vertices[face.v[2]].position;
+        Eigen::Vector3f v0 = mesh.vertices[face.v[0]].position;
+        Eigen::Vector3f v1 = mesh.vertices[face.v[1]].position;
+        Eigen::Vector3f v2 = mesh.vertices[face.v[2]].position;
 
-        // Calculate normal in each face
-        glm::vec3 n = glm::normalize(glm::cross(v1 - v0, v2 - v0));
+        // Calculate normal for each face
+        Eigen::Vector3f n = (v1 - v0).cross(v2 - v0).normalized();
 
         for (int i = 0; i < 3; i++) {
-            glm::vec3 pos = mesh.vertices[face.v[i]].position;
-            newVertices.push_back(pos.x);
-            newVertices.push_back(pos.y);
-            newVertices.push_back(pos.z);
-            newNormals.push_back(n.x);
-            newNormals.push_back(n.y);
-            newNormals.push_back(n.z);
+            Eigen::Vector3f pos = mesh.vertices[face.v[i]].position;
+            newVertices.push_back(pos.x());
+            newVertices.push_back(pos.y());
+            newVertices.push_back(pos.z());
+            newNormals.push_back(n.x());
+            newNormals.push_back(n.y());
+            newNormals.push_back(n.z());
             // Check if there texture coordinates has been loaded
             if (mesh.hasTexture) {
                 glm::vec2 tex = mesh.texCoords[face.v[i]];
@@ -574,17 +575,17 @@ void calculateBoundingBox(Mesh& mesh)
     view = glm::mat4(1.0f);
     projection = glm::mat4(1.0f);
 
-    mesh.minBBX = mesh.vertices[0].position;
-    mesh.maxBBX = mesh.vertices[0].position;
+    mesh.minBBX = glm::vec3(mesh.vertices[0].position.x(), mesh.vertices[0].position.y(), mesh.vertices[0].position.z());
+    mesh.maxBBX = glm::vec3(mesh.vertices[0].position.x(), mesh.vertices[0].position.y(), mesh.vertices[0].position.z());
 
     // Calculate bounding box
     for (const Vertex& vertex : mesh.vertices) {
-        mesh.minBBX.x = std::min(mesh.minBBX.x, vertex.position.x);
-        mesh.minBBX.y = std::min(mesh.minBBX.y, vertex.position.y);
-        mesh.minBBX.z = std::min(mesh.minBBX.z, vertex.position.z);
+        mesh.minBBX.x = std::min(mesh.minBBX.x, vertex.position.x());
+        mesh.minBBX.y = std::min(mesh.minBBX.y, vertex.position.y());
+        mesh.minBBX.z = std::min(mesh.minBBX.z, vertex.position.z());
 
-        mesh.maxBBX.x = std::max(mesh.maxBBX.x, vertex.position.x);
-        mesh.maxBBX.y = std::max(mesh.maxBBX.y, vertex.position.y);
-        mesh.maxBBX.z = std::max(mesh.maxBBX.z, vertex.position.z);
+        mesh.maxBBX.x = std::max(mesh.maxBBX.x, vertex.position.x());
+        mesh.maxBBX.y = std::max(mesh.maxBBX.y, vertex.position.y());
+        mesh.maxBBX.z = std::max(mesh.maxBBX.z, vertex.position.z());
     }
 }
