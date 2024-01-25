@@ -5,8 +5,8 @@ out vec4 FragColor;
 in vec2 texCoord;
 in vec3 Normal;
 
-uniform sampler2D modelTexture;
-uniform bool enableTexture;
+uniform sampler2D modelTexture; // 2D texture image
+uniform bool enableTexture; // bool value to display texture
 
 void main()
 {

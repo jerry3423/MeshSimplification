@@ -2,21 +2,29 @@
 C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\include\Eigen\src\Core\arch\Default\Half.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
 C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\include\Eigen\src\Core\arch\Default\BFloat16.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
 C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\include\Eigen\src\Core\arch\Default\GenericPacketMathFunctions.h(676,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
-C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(148,44): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
-C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(187,21): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
-C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(214,25): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(220,24): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(258,34): warning C4267: “参数”: 从“size_t”转换到“_Ty”，可能丢失数据
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(147,44): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(189,21): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(216,25): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(222,24): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(263,34): warning C4267: “参数”: 从“size_t”转换到“_Ty”，可能丢失数据
           with
           [
               _Ty=int
           ]
-C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(259,34): warning C4267: “参数”: 从“size_t”转换到“_Ty”，可能丢失数据
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(264,34): warning C4267: “参数”: 从“size_t”转换到“_Ty”，可能丢失数据
           with
           [
               _Ty=int
           ]
-C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(269,15): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
-C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(344,53): warning C4305: “参数”: 从“double”到“const float”截断
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(274,15): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(348,53): warning C4305: “参数”: 从“double”到“const float”截断
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(519,11): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
 C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\Mesh.cpp(534,36): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+  main.cpp
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\include\Eigen\src\Core\arch\Default\Half.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\include\Eigen\src\Core\arch\Default\BFloat16.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\include\Eigen\src\Core\arch\Default\GenericPacketMathFunctions.h(676,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\main.cpp(142,86): warning C4267: “参数”: 从“size_t”转换到“GLsizei”，可能丢失数据
+C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\Mesh Simplification\main.cpp(267,16): warning C4244: “-=”: 从“double”转换到“float”，可能丢失数据
+  正在生成代码...
   Mesh Simplification.vcxproj -> C:\Users\ShiJiafei\Desktop\Mesh Simplification\Mesh Simplification\x64\Debug\Mesh Simplification.exe

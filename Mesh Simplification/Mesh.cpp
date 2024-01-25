@@ -34,7 +34,6 @@ void Mesh::readFile(const char* filename)
 		if (pre == "v")
 		{
 			// Load vertex position
-			// v 0.732802 -0.238102 1.137424
 			Vertex vertex;
 			s >> vertex.position[0] >> vertex.position[1] >> vertex.position[2];
 			vertices.push_back(vertex);
@@ -42,7 +41,6 @@ void Mesh::readFile(const char* filename)
 		else if (pre == "vn")
 		{
 			// Load normals
-			// vn -0.873412 0.234567 0.594623
 			hasNormal = true;
 			glm::vec3 normal;
 			s >> normal[0] >> normal[1] >> normal[2];
@@ -51,7 +49,6 @@ void Mesh::readFile(const char* filename)
 		else if (pre == "vt")
 		{
 			// Load texture coordinates
-			// vt 0.900000 1.000000
 			hasTexture = true;
 			glm::vec2 texCoord;
 			s >> texCoord[0] >> texCoord[1];
@@ -62,9 +59,7 @@ void Mesh::readFile(const char* filename)
 			Face face;
 			face.v.resize(3);
 
-			// Load vertex attributes                     (v/vn/vt)
-			// If texture coordinates and normals exists: f 1/1/1 2/2/2 3/3/3
-			// If only texture coordinates exists:        f 1//1 2//2 3//3
+			// Load indices of position/ texture coordinate/ normal
 			for (int i = 0; i < 3; ++i) {
 				std::string vertexAttri;
 				s >> vertexAttri;
@@ -84,6 +79,7 @@ void Mesh::readFile(const char* filename)
 
 void Mesh::writeFile(const char* filename)
 {
+	// Add "-simp" to indicate it's a simplified mesh
 	std::string filePath = baseFilePath + filename + "-simp" + extension;
 	ofstream outfile(filePath);
 
@@ -91,6 +87,7 @@ void Mesh::writeFile(const char* filename)
 	{
 		outfile << "v " << fixed << setprecision(6) << vertex.position[0] << " " << vertex.position[1] << " " << vertex.position[2] << "\n";
 	}
+	// Write normals to the file if they exist
 	if (hasNormal)
 	{
 		for (const auto& normal : normals)
@@ -98,6 +95,7 @@ void Mesh::writeFile(const char* filename)
 			outfile << "vn " << fixed << setprecision(6) << normal[0] << " " << normal[1] << " " << normal[2] << "\n";
 		}
 	}
+	// Write texture coordinates to the file if they exist
 	if (hasTexture)
 	{
 		for (const auto& texCoord : texCoords)
@@ -105,6 +103,7 @@ void Mesh::writeFile(const char* filename)
 			outfile << "vt " << fixed << setprecision(6) << texCoord[0] << " " << texCoord[1] << "\n";
 		}
 	}
+	// Write face vertex indices to the file
 	for (const auto& face : faceVertices)
 	{
 		outfile << "f " << fixed << setprecision(6) << face.v[0] + 1 << " " << face.v[1] + 1 << " " << face.v[2] + 1 << "\n";
@@ -137,7 +136,7 @@ void Mesh::buildDirectedEdgeStructure()
 		// Iterate over the three half edge of the triangle
 		for (int j = 0; j < 3; j++)
 		{
-			// Build a half edge from v0 to v1
+			// Construct a half edge from vertex vFrom to vertex vTo
 			int vFrom = faceVertices[i].v[j];
 			int vTo = faceVertices[i].v[(j + 1) % 3];
 			std::pair<int, int> halfEdge(vFrom, vTo);
@@ -157,7 +156,9 @@ void Mesh::buildDirectedEdgeStructure()
 	for (const auto& edgePair : halfEdgeMap)
 	{
 		std::pair<int, int> halfEdge = edgePair.first;
+		// Create the opposite half edge
 		std::pair<int, int> oppositeHalfEdge(halfEdge.second, halfEdge.first);
+		// If opposite half edge exists, map them to each other
 		if (halfEdgeMap.find(oppositeHalfEdge) != halfEdgeMap.end())
 		{
 			int halfEdgeIndex = halfEdgeMap[halfEdge];
@@ -170,6 +171,7 @@ void Mesh::buildDirectedEdgeStructure()
 
 void Mesh::preProcessData()
 {
+	// Build the directed edge structure for the mesh
 	buildDirectedEdgeStructure();
 
 	for (int i = 0; i < vertices.size(); i++)
@@ -190,7 +192,7 @@ void Mesh::preProcessData()
 			visitedHalfEdges[hEdgeIndex] = true;
 			vertices[vFromIndex].adjacentFaces.insert(hEdgeIndex / 3);
 
-			// Get next halfedge Index
+			// Get the index of the next half edge
 			hEdgeIndex = oppositeHalf[hEdgeIndex];
 			if (hEdgeIndex != -1)
 			{
@@ -199,7 +201,7 @@ void Mesh::preProcessData()
 		} while (hEdgeIndex != -1 && hEdgeIndex != i);
 	}
 
-	// Get boundary vertex
+	// Mark boundary vertices
 	for (size_t i = 0; i < directedEdge.size(); i++)
 	{
 		if (oppositeHalf[i] == -1)
@@ -208,7 +210,7 @@ void Mesh::preProcessData()
 		}
 	}
 
-	// Compute parameters of each face equation: ax + by + cz + d = 0
+	// Compute the plane equation parameters for each face
 	for (size_t i = 0; i < faceVertices.size(); i++)
 	{
 		computeFaceParameter(i);
@@ -217,10 +219,10 @@ void Mesh::preProcessData()
 	// Compute Q for each vertex
 	for (size_t i = 0; i < vertices.size(); i++)
 	{
-		computeErrorMetrics(i);
+		computeQuadricError(i);
 	}
-	// Build edge queue
-	// Clear queue first
+
+	// Build the priority queue for edges based on their collapse cost
 	while (!edgeHeap.empty())
 	{
 		edgeHeap.pop();
@@ -228,9 +230,11 @@ void Mesh::preProcessData()
 	std::map<std::pair<int, int>, bool> processedEdges;
 	for (size_t i = 0; i < directedEdge.size(); i++)
 	{
+		// Get indices of two vertices
 		int v1 = directedEdge[i];
 		int v2 = directedEdge[3 * (i / 3) + (i % 3 + 1) % 3];
 
+		// Avoid edge has been added to edge queue
 		if (v1 > v2) std::swap(v1, v2);
 
 		auto edgePair = std::make_pair(v1, v2);
@@ -238,16 +242,17 @@ void Mesh::preProcessData()
 		if (processedEdges.find(edgePair)!=processedEdges.end()) continue;
 		processedEdges[edgePair] = true;
 
-		//  Create edge and push to priority queue
+		// Create edge and push to priority queue
 		Edge edge;
 		edge.v1 = v1;
 		edge.v2 = v2;
 		edge.version = 0;
 		computeEdgeCost(edge);
 		edgeHeap.push(edge);
-		versionControl[edgePair] = 0;
+		versionControl[edgePair] = 0; // Default edge version to 0
 	}
 
+	// Additional processing for close vertices aggregation if enabled
 	if (enableAggregation)
 	{
 		// Find all vertices whose distance from the current vertex is less than t
@@ -281,7 +286,7 @@ void Mesh::preProcessData()
 				edge.version = 0;
 				computeEdgeCost(edge);
 				edgeHeap.push(edge);
-				versionControl[edgePair] = 0;
+				versionControl[edgePair] = 0; // Default edge version to 0
 			}
 		}
 	}
@@ -303,23 +308,27 @@ void Mesh::computeFaceParameter(int faceIndex)
 	faceVertices[faceIndex].d = -faceNormal.dot(v1);
 }
 
-void Mesh::computeErrorMetrics(int vertexIndex)
+void Mesh::computeQuadricError(int vertexIndex)
 {
 	// Initialize matrix Q
 	vertices[vertexIndex].Q.setZero();
 
+	// Iterate over all faces adjacent to this vertex
 	for (auto it = vertices[vertexIndex].adjacentFaces.begin(); it != vertices[vertexIndex].adjacentFaces.end(); it++)
 	{
 		Face& face = faceVertices[*it];
 
+		// Calculate the fundamental error matrix components A, b, c for the face
 		Eigen::Matrix3f A = face.n * face.n.transpose();
 		Eigen::Vector3f b = face.d * face.n;
 		float c = face.d * face.d;
 
+		// Construct the 4x4 error matrix for this face
 		Eigen::Matrix4f Kp;
 		Kp << A, b,
 			b.transpose(), c;
 
+		// Add the error matrix for this face to the vertex's quadric error matrix
 		vertices[vertexIndex].Q += Kp;
 	}
 }
@@ -333,12 +342,14 @@ void Mesh::computeEdgeCost(Edge& edge)
 	Eigen::Vector3f b = Q.topRightCorner<3, 1>();
 	float c = Q(3, 3);
 
+	// Attempt to invert matrix A
 	Eigen::Matrix3f Ainv;
 	bool isAInvertible;
-	A.computeInverseWithCheck(Ainv, isAInvertible, 1e-4);
-	// Place new vertex to optimal position
+	A.computeInverseWithCheck(Ainv, isAInvertible, 1e-2);
+	// Optimal position mode
 	if (currentMode == 0)
 	{
+		// If A is invertible, calculate the optimal position and cost
 		if (isAInvertible)
 		{
 			edge.optimalPos = -Ainv * b;
@@ -346,7 +357,7 @@ void Mesh::computeEdgeCost(Edge& edge)
 		}
 		else
 		{
-			// If matrix A cannot inverse, place new vertex to middle position
+			// If A is not invertible, use the midpoint as the optimal position
 			edge.optimalPos = (vertices[edge.v1].position + vertices[edge.v2].position) * 0.5f;
 			Eigen::Vector4f v(edge.optimalPos(0), edge.optimalPos(1), edge.optimalPos(2), 1.0f);
 			edge.cost = v.transpose() * Q * v;
@@ -354,6 +365,7 @@ void Mesh::computeEdgeCost(Edge& edge)
 	}
 	else if (currentMode == 1)
 	{
+		// Use the midpoint as the optimal position
 		edge.optimalPos = (vertices[edge.v1].position + vertices[edge.v2].position) * 0.5f;
 		Eigen::Vector4f v(edge.optimalPos(0), edge.optimalPos(1), edge.optimalPos(2), 1.0f);
 		edge.cost = v.transpose() * Q * v;
@@ -362,7 +374,7 @@ void Mesh::computeEdgeCost(Edge& edge)
 
 void Mesh::updateArrays()
 {
-	// Clean vertices data
+	// Mark vertices with no adjacent faces for deletion
 	for (size_t i = 0; i < vertices.size(); i++)
 	{
 		if (vertices[i].adjacentFaces.size() == 0)
@@ -370,13 +382,13 @@ void Mesh::updateArrays()
 			vertices[i].deleteFlag = true;
 		}
 	}
-	// Update origin vertex array and face array
+	// Prepare new arrays for updated mesh data
 	std::vector<Vertex> newV;
 	std::vector<Face> newF;
 	std::vector<glm::vec2> newTex;
 	std::vector<glm::vec3> newNorm;
 
-
+	// Map to keep track of new indices of vertices
 	indexMap.resize(vertices.size());
 	int simplifiedindex = 0;
 	for (size_t i = 0; i < vertices.size(); i++)
@@ -397,12 +409,12 @@ void Mesh::updateArrays()
 			}
 		}
 		else {
-			indexMap[i] = -1;
+			indexMap[i] = -1; // Mark deleted vertices with -1
 		}
 	}
 
 	for (size_t i = 0; i < faceVertices.size(); i++) {
-		// If three vertices in a face have not been deleted, push correct vertex index to a new face array
+		// Check if all vertices of the face are still present
 		if (!vertices[faceVertices[i].v[0]].deleteFlag && !vertices[faceVertices[i].v[1]].deleteFlag && !vertices[faceVertices[i].v[2]].deleteFlag) {
 			Face updatedFace = faceVertices[i];
 			for (int j = 0; j < 3; j++) {
@@ -412,28 +424,7 @@ void Mesh::updateArrays()
 		}
 	}
 
-	//std::vector<float> nearestDistance;
-	//nearestDistance.reserve(vertices.size());
-
-	//for (const auto& vertex : vertices) {
-	//	float minDistance = std::numeric_limits<float>::max();
-
-	//	for (const auto& newVertex : newV) {
-	//		float distSq = glm::distance(vertex.position, newVertex.position);
-	//		if (distSq < minDistance) {
-	//			minDistance = distSq;
-	//		}
-	//	}
-
-	//	nearestDistance.push_back(minDistance * minDistance);
-	//}
-	//float sum = 0.0f;
-	//for (auto d : nearestDistance)
-	//{
-	//	sum += d;
-	//}
-	//error = sqrt(sum / vertices.size());
-
+	// Replace old arrays with the new ones
 	vertices = std::move(newV);
 	faceVertices = std::move(newF);
 	texCoords = std::move(newTex);
@@ -457,6 +448,7 @@ bool Mesh::validEdge(const Edge& edge)
 	{
 		return false;
 	}
+	// Perserve boundaries
 	if ((vertices[v1].isBoundary || vertices[v2].isBoundary) && preserveBoundary)
 	{
 		return false;
@@ -464,7 +456,7 @@ bool Mesh::validEdge(const Edge& edge)
 	return true;
 }
 
-bool Mesh::isFlipped(const Edge& edge, const std::set<int>& commonFaces)
+bool Mesh::checkFaceInversion(const Edge& edge, const std::set<int>& commonFaces)
 {
 	int v1 = edge.v1;
 	int v2 = edge.v2;
@@ -472,7 +464,7 @@ bool Mesh::isFlipped(const Edge& edge, const std::set<int>& commonFaces)
 	std::set<int> facesToCheck;
 	facesToCheck.insert(vertices[v1].adjacentFaces.begin(), vertices[v1].adjacentFaces.end());
 	facesToCheck.insert(vertices[v2].adjacentFaces.begin(), vertices[v2].adjacentFaces.end());
-
+	// Erase common adjacent faces
 	for (int faceIndex : commonFaces)
 	{
 		facesToCheck.erase(faceIndex);
@@ -501,9 +493,9 @@ bool Mesh::isFlipped(const Edge& edge, const std::set<int>& commonFaces)
 		// Calculate new normal
 		Eigen::Vector3f newNormal = (newPositions[1] - newPositions[0]).cross(newPositions[2] - newPositions[0]).normalized();
 
-		float COS_THRESHOLD = std::cos(40 * 3.1415926 / 180.0);
+		float d = std::cos(40 * 3.1415926 / 180.0);
 		// Check if the direction of the normal has changed significantly
-		if (oldNormal.dot(newNormal) < COS_THRESHOLD)
+		if (oldNormal.dot(newNormal) < d)
 		{
 			return true;
 		}
@@ -515,28 +507,12 @@ bool Mesh::isFlipped(const Edge& edge, const std::set<int>& commonFaces)
 
 void Mesh::simplify()
 {
-	// Compute Q for all initial vertices
-
-	// Loop through all edge pairs and build a priority edge queue
-
-		// Compute optimal vertex position for each edge pair using Q1, Q2
-
-		// Compute minimum cost for each edge pair
-
-	// Repeat:
-	
-		// Select and collapse an edge pair(v1,v2) with minimum cost in the top of queue
-		
-		// Push new edge to queue
-	//-----------------------------------------------------------------------------------
-
+	// Calculate the target number of faces based on the simplify ratio
 	int face_num = faceVertices.size();
 	size_t count = 0;
-	// Select and collapse edge, v1 - v2. 
-	// Move v1 and v2 to optimal position, replace v2 to v1, delete v2
 	while (count < (1 - simplifyRatio) * face_num)
 	{
-		// Get a vaild edge with minumum cost
+		// Select the edge with the minimum cost that is valid for collapsing
 		while (!edgeHeap.empty() && !validEdge(edgeHeap.top()))
 		{
 			edgeHeap.pop();
@@ -545,13 +521,14 @@ void Mesh::simplify()
 		{
 			break;
 		}
+		// Get the edge with the minimum cost
 		Edge edge = edgeHeap.top();
 		edgeHeap.pop();
 
 		int v1 = edge.v1;
 		int v2 = edge.v2;
 
-		// Get v1 and v2 common adjacent face idnex
+		// Get v1 and v2 common adjacent faces
 		std::set<int> commonAdjacentFaces;
 		for (int faceIndex : vertices[v1].adjacentFaces)
 		{
@@ -560,7 +537,7 @@ void Mesh::simplify()
 				commonAdjacentFaces.insert(faceIndex);
 			}
 		}
-
+		// Skip edges that would create non-manifold geometry
 		if (commonAdjacentFaces.size() > 2)
 		{
 			continue;
@@ -569,7 +546,7 @@ void Mesh::simplify()
 		// Prevent face inversion
 		if (preventInversion)
 		{
-			if (isFlipped(edge, commonAdjacentFaces))
+			if (checkFaceInversion(edge, commonAdjacentFaces))
 			{
 				continue;
 			}
@@ -579,7 +556,7 @@ void Mesh::simplify()
 		vertices[v1].position = edge.optimalPos;
 		vertices[v1].Q = vertices[v1].Q + vertices[v2].Q;
 
-		// Erase vertex's adjacent faces that have edge v1 - v2
+		// Remove collapsed faces that are adjacent to both v1 and v2
 		for (int faceIndex : commonAdjacentFaces)
 		{
 			for (int i = 0; i < 3; i++)
@@ -602,6 +579,7 @@ void Mesh::simplify()
 			vertices[v1].adjacentFaces.insert(faceIndex);
 		}
 
+		// Mark v2 as deleted
 		vertices[v2].deleteFlag = true;
 
 		// Get v1's adjacent vertices
@@ -618,7 +596,7 @@ void Mesh::simplify()
 			}
 		}
 
-		// Build new edge and push to edge queue
+		// Rebuild the edges connected to v1 and add them to the priority queue
 		for (int vertexIndex : adjacentVertices)
 		{
 			int vIndex = vertexIndex;
@@ -629,14 +607,8 @@ void Mesh::simplify()
 			computeEdgeCost(newedge);
 			edgeHeap.push(newedge);
 		}
-		if (commonAdjacentFaces.size() == 1)
-		{
-			count++;
-		}
-		else if (commonAdjacentFaces.size() == 2)
-		{
-			count += 2;
-		}
+		// Increment the count based on how many faces were collapsed
+		count += commonAdjacentFaces.size();
 	}
 
 	updateArrays();
