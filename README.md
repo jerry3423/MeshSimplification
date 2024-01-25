@@ -4,9 +4,9 @@
 This project uses the Quadric Error Metrics (QEM) method for mesh simplification.
 
 ## Cloning the Repository
-git clone git@github.com:jerry3423/MeshSimplification.git
+1. git clone git@github.com:jerry3423/MeshSimplification.git
 
-run Mesh Simplification.sln
+2. run Mesh Simplification.sln
 
 ## Citation
 This project is based on the following paper:
